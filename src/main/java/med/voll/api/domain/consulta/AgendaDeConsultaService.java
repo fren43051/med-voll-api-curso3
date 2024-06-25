@@ -1,6 +1,7 @@
 package med.voll.api.domain.consulta;
 
 
+import med.voll.api.domain.consulta.desafio.ValidadorCancelamientoDeConsulta;
 import med.voll.api.domain.consulta.validaciones.ValidadorDeConsultas;
 import med.voll.api.domain.medico.Medico;
 import med.voll.api.domain.medico.MedicoRepository;
@@ -24,6 +25,9 @@ public class AgendaDeConsultaService {
     @Autowired
     List<ValidadorDeConsultas> validadores;
 
+    @Autowired
+    List<ValidadorCancelamientoDeConsulta> validadoresCancelamiento;
+
     public DatosDetalleConsulta agendar(DatosAgendarConsulta datos){
 
         if(!pacienteRepository.findById(datos.idPaciente()).isPresent()){
@@ -44,12 +48,30 @@ public class AgendaDeConsultaService {
             throw new ValidacionDeIntegridad("no existen medicos disponibles para este horario y especialidad");
         }
 
-        var consulta = new Consulta(null,medico,paciente,datos.fecha());
+        var consulta = new Consulta(medico,paciente,datos.fecha());
 
         consultaRepository.save(consulta);
 
         return new DatosDetalleConsulta(consulta);
 
+    }
+
+    public void cancelar(DatosCancelamientoConsulta datos) {
+        if (!consultaRepository.existsById(datos.getIdConsulta())) {
+            throw new ValidacionDeIntegridad("Este id para la consulta no fue encontrado");
+        }
+        if (datos.getMotivo() == null) {
+            throw new ValidacionDeIntegridad("Es obligatorio informar el motivo de la cancelación de la consulta");
+        }
+        validadoresCancelamiento.forEach(v -> {
+            v.validar(datos);
+            if (!v.podeCancelar(consultaRepository.getReferenceById(datos.getIdConsulta()))) {
+                throw new ValidacionDeIntegridad(v.motivoCancelamentoInvalido(consultaRepository.getReferenceById(datos.getIdConsulta())));
+            }
+        });
+
+        var consulta = consultaRepository.getReferenceById(datos.getIdConsulta());
+        consulta.cancelar(datos.getMotivo());
     }
 
     private Medico seleccionarMedico(DatosAgendarConsulta datos) {
