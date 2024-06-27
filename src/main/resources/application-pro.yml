@@ -1,14 +1,14 @@
 spring:
-  profile.active: dev, test, pro
+  profile.active: pro
   datasource:
-    url: jdbc:mysql://localhost/vollmed_api
-    username: root
-    password: Mimusica2804$
+    url: ${DATASOURCE_URL}
+    username: ${DATASOURCE_USERNAME}
+    password: ${DATASOURCE_PASSWORD}
   jpa:
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
 
 server:
   error:

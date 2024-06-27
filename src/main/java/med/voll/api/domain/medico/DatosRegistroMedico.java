@@ -23,3 +23,5 @@ public record DatosRegistroMedico(
         @Valid
         DatosDireccion direccion) {
 }
+
+
